@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cienrayas-bot
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    plan: free
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false                    # Se configura manualmente en Render
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WEBHOOK_VERIFY_TOKEN
+        value: cienrayas_secreto       # Cambiar si quieres otro token
+      - key: MEDIA_DIR
+        value: media
+      # BASE_URL se detecta automáticamente desde RENDER_EXTERNAL_URL (ver config.py)
