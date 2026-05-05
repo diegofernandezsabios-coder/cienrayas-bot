@@ -11,8 +11,11 @@ Flujo de mensajes (cada mensaje del usuario):
   → BackgroundTask procesa y envía respuesta via WhatsApp API
 """
 import asyncio
+import logging
 from fastapi import APIRouter, BackgroundTasks, Request, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+
+logger = logging.getLogger(__name__)
 
 from config import WEBHOOK_VERIFY_TOKEN, BASE_URL
 from services.whatsapp import send
@@ -72,6 +75,7 @@ async def _handle_fishing_query(from_number: str, user_message: str):
             ),
         )
     except Exception as e:
+        logger.error(f"Error generando análisis para {from_number}: {e}")
         await send(from_number,
                    f"Tuve un problema generando el análisis 😓 Error: {str(e)[:60]}")
         return
