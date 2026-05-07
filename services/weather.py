@@ -1,3 +1,4 @@
+import asyncio
 import httpx
 from config import CIENAGA_LAT, CIENAGA_LON
 
@@ -40,10 +41,20 @@ async def get_weather() -> dict:
         "forecast_days": 1,
     }
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.get(OPEN_METEO_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
+    last_exc = None
+    for attempt in range(2):
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                response = await client.get(OPEN_METEO_URL, params=params)
+                response.raise_for_status()
+                data = response.json()
+            break
+        except Exception as e:
+            last_exc = e
+            if attempt == 0:
+                await asyncio.sleep(3)
+    else:
+        raise last_exc
 
     current = data["current"]
     wind_dir = current.get("wind_direction_10m", 0)
