@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 from config import WEBHOOK_VERIFY_TOKEN, BASE_URL
 from services.whatsapp import send
 from services.weather import get_weather
-from services.satellite import get_satellite_data
+from services.redcam import get_redcam_data
+from services.satellite import get_chlorophyll
 from services.map_generator import generate_map
 from services.llm import generate_fishing_response, generate_feedback_ack
 from core.semaphore import evaluate
@@ -38,9 +39,10 @@ router = APIRouter()
 
 async def _handle_fishing_query(from_number: str, user_message: str):
     try:
-        weather, satellite = await asyncio.gather(
+        weather, redcam, (chlorophyll, chl_src) = await asyncio.gather(
             get_weather(),
-            get_satellite_data(),
+            get_redcam_data(),
+            get_chlorophyll(),
         )
     except Exception as e:
         logger.error(f"Error obteniendo datos para {from_number}: {e}")
@@ -49,7 +51,7 @@ async def _handle_fishing_query(from_number: str, user_message: str):
                    f"Intente en unos minutos. ({e.__class__.__name__})")
         return
 
-    result = evaluate(weather, satellite)
+    result = evaluate(weather, redcam, chlorophyll)
 
     # ROJO — alerta de seguridad, sin mapa
     if not result.safe:
@@ -69,10 +71,10 @@ async def _handle_fishing_query(from_number: str, user_message: str):
     # VERDE / AMARILLO — análisis completo
     try:
         response_text, map_filename = await asyncio.gather(
-            generate_fishing_response(weather, satellite, result.color),
+            generate_fishing_response(weather, redcam, chlorophyll, chl_src, result.color),
             asyncio.to_thread(
                 generate_map, result.color,
-                satellite["sst"], satellite["chlorophyll"]
+                redcam["temperatura"], chlorophyll
             ),
         )
     except Exception as e:
@@ -84,7 +86,7 @@ async def _handle_fishing_query(from_number: str, user_message: str):
     footer = (
         f"\n\n━━━━━━━━━━━━━\n"
         f"_{result.emoji} {result.reason}_\n"
-        f"_Fuentes: NASA · Open-Meteo · {satellite['sst_source']}_"
+        f"_Fuentes: {redcam['fuente']} · Open-Meteo · {chl_src}_"
     )
 
     try:

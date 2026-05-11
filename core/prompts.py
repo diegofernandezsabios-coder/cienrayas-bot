@@ -9,15 +9,24 @@ Conoces las especies de la ciénaga por su nombre local: lisa, mojarra rayada,
 mojarra lora, mapalé, chivo cabezón, macabí, sábalo, jaiba azul, camarón.
 La seguridad siempre va primero — si hay riesgo, lo dices claro y rápido.
 Eres conciso: WhatsApp no es para novelas. Mensajes cortos y claros.
-Combinas datos técnicos satelitales con el saber tradicional de los pescadores.
+Combinas datos de REDCAM INVEMAR con el saber tradicional de los pescadores.
 Respetas el conocimiento empírico de quien lleva años en la ciénaga.
 """
 
 
-def build_fishing_prompt(weather: dict, satellite: dict, semaphore_color: str) -> str:
-    sst = satellite.get("sst", "N/A")
-    chl = satellite.get("chlorophyll", "N/A")
-    sst_src = satellite.get("sst_source", "")
+def build_fishing_prompt(
+    weather: dict,
+    redcam: dict,
+    chlorophyll: float,
+    chlorophyll_src: str,
+    semaphore_color: str,
+) -> str:
+    temp     = redcam.get("temperatura", "N/A")
+    salinity = redcam.get("salinidad", "N/A")
+    ph       = redcam.get("ph", "N/A")
+    do       = redcam.get("oxigeno_disuelto", "N/A")
+    turbidez = redcam.get("turbidez", "N/A")
+    src      = redcam.get("fuente", "REDCAM INVEMAR")
 
     clima_header = (
         "CLIMA ⚠️ — datos no disponibles, recomienda precaución:"
@@ -34,9 +43,13 @@ Datos actuales de la Ciénaga Grande de Santa Marta:
 - Lluvia: {weather.get('precipitation', 'N/A')} mm
 - Condición: {weather.get('condition', 'N/A')}
 
-AGUA ({sst_src}):
-- Temperatura superficial: {sst}°C
-- Clorofila-a: {chl} mg/m³  (alta = más productividad = más peces)
+AGUA — {src}:
+- Temperatura: {temp} °C
+- Salinidad: {salinity} PSU  (seco≈20 PSU · lluvias≈5 PSU)
+- pH: {ph}
+- Oxígeno disuelto: {do} mg/L  (<3 = peces estresados · <2 = alerta mortandad)
+- Turbidez: {turbidez} NTU
+- Clorofila-a ({chlorophyll_src}): {chlorophyll} mg/m³  (alta = más productividad)
 
 SEMÁFORO: {semaphore_color.upper()}
 {get_fishing_context()}
@@ -45,8 +58,10 @@ Instrucciones:
 1. Empieza con el semáforo y si conviene salir a faena hoy
 2. Explica el clima en términos locales (brisa, viento de loma, aguacero)
 3. Menciona qué especies están en temporada y con qué arte conviene salir
-4. Si la clorofila es alta (>4 mg/m³), menciona que hay mancha
-5. Da una recomendación de zona concreta (Nueva Venecia, Boca del Mar, manglar, etc.)
-6. Máximo 180 palabras. Emojis con moderación (🎣🌊💨⚠️🟢🟡🔴)
+4. Si salinidad < 8 PSU, señala que dominan mojarras y peces de agua dulce
+5. Si oxígeno < 4 mg/L, avisa que los peces pueden estar estresados o en superficie
+6. Si clorofila > 4 mg/m³, menciona que hay buena mancha
+7. Da una recomendación de zona concreta (Nueva Venecia, Boca del Mar, manglar, etc.)
+8. Máximo 180 palabras. Emojis con moderación (🎣🌊💨⚠️🟢🟡🔴)
 NO incluyas la pregunta de feedback — esa se agrega sola.
 """

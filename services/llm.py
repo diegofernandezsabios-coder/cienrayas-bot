@@ -34,8 +34,14 @@ def _call_gemini(prompt: str) -> str:
     raise last_exc
 
 
-async def generate_fishing_response(weather: dict, satellite: dict, semaphore_color: str) -> str:
-    prompt = build_fishing_prompt(weather, satellite, semaphore_color)
+async def generate_fishing_response(
+    weather: dict,
+    redcam: dict,
+    chlorophyll: float,
+    chlorophyll_src: str,
+    semaphore_color: str,
+) -> str:
+    prompt = build_fishing_prompt(weather, redcam, chlorophyll, chlorophyll_src, semaphore_color)
     return await asyncio.to_thread(_call_gemini, prompt)
 
 
