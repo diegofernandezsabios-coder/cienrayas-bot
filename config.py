@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Google Gemini (gratis)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+# Groq (gratis, llama-3.3-70b-versatile)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 
 # Meta WhatsApp Cloud API (gratis)
 WHATSAPP_TOKEN           = os.getenv("WHATSAPP_TOKEN", "")

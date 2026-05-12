@@ -85,12 +85,10 @@ async def _handle_fishing_query(from_number: str, user_message: str):
                    f"Tuve un problema generando el análisis 😓 Error: {str(e)[:60]}")
         return
 
-    wq_src = water_quality.get("source", "IDEAM-CGSM")
     footer = (
         f"\n\n━━━━━━━━━━━━━\n"
         f"_{result.emoji} {result.reason}_\n"
-        f"_📍 Mejor zona: {best_zone['name']} (índice {best_zone['score']:.0f}/100)_\n"
-        f"_Fuentes: NASA · Open-Meteo · {wq_src}_"
+        f"_Datos: NASA · IDEAM · clima en tiempo real_"
     )
 
     try:
