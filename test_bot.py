@@ -6,9 +6,14 @@ Uso:
     cd cienrayas
     python test_bot.py
 """
+import sys
 import asyncio
 import os
 from dotenv import load_dotenv
+
+# Forzar UTF-8 en la consola de Windows para que los emojis no rompan
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 load_dotenv()
 
