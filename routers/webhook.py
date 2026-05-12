@@ -25,7 +25,7 @@ from services.water_quality import get_water_quality
 from services.map_generator import generate_map
 from services.llm import generate_fishing_response, generate_feedback_ack
 from core.semaphore import evaluate
-from core.zone_analysis import recommend_zone
+from core.zone_analysis import recommend_zone, full_ranking
 from core.state import (
     record_query, record_feedback,
     is_awaiting_feedback, looks_like_feedback,
@@ -53,7 +53,8 @@ async def _handle_fishing_query(from_number: str, user_message: str):
         return
 
     result = evaluate(weather, satellite, water_quality)
-    best_zone = recommend_zone(satellite, water_quality)
+    ranking = full_ranking(satellite, water_quality)
+    best_zone = ranking[0]
 
     # ROJO — alerta de seguridad, sin mapa
     if not result.safe:
@@ -76,7 +77,8 @@ async def _handle_fishing_query(from_number: str, user_message: str):
             generate_fishing_response(weather, satellite, water_quality, result.color),
             asyncio.to_thread(
                 generate_map, result.color,
-                satellite["sst"], satellite["chlorophyll"]
+                satellite["sst"], satellite["chlorophyll"],
+                water_quality, ranking,
             ),
         )
     except Exception as e:
