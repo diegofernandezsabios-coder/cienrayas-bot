@@ -29,6 +29,7 @@ from core.zone_analysis import recommend_zone, full_ranking
 from core.state import (
     record_query, record_feedback,
     is_awaiting_feedback, looks_like_feedback,
+    is_duplicate,
 )
 
 router = APIRouter()
@@ -156,6 +157,11 @@ async def receive_webhook(background_tasks: BackgroundTasks, request: Request):
         message = change["messages"][0]
         if message.get("type") != "text":
             return {"status": "ok"}  # Ignorar audio/imagen/stickers por ahora
+
+        # Ignorar reintentos de Meta — mismo mensaje_id ya procesado
+        if is_duplicate(message.get("id", "")):
+            logger.info(f"Mensaje duplicado ignorado: {message.get('id')}")
+            return {"status": "ok"}
 
         from_number = message["from"]          # e.g. "573001234567"
         body = message["text"]["body"].strip()

@@ -2,9 +2,31 @@
 Gestión en memoria del estado de conversación por número de teléfono.
 En producción reemplazar por Redis o base de datos.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 
 _conversations: dict[str, dict] = {}
+
+# IDs de mensajes ya procesados — evita duplicados por reintentos de Meta
+# Formato: {message_id: timestamp}
+_processed_ids: dict[str, datetime] = {}
+_DEDUP_TTL_MINUTES = 10
+
+
+def is_duplicate(message_id: str) -> bool:
+    """Devuelve True si este mensaje ya fue procesado recientemente."""
+    _purge_old_ids()
+    if message_id in _processed_ids:
+        return True
+    _processed_ids[message_id] = datetime.now()
+    return False
+
+
+def _purge_old_ids():
+    """Limpia IDs más viejos que el TTL para no crecer indefinidamente."""
+    cutoff = datetime.now() - timedelta(minutes=_DEDUP_TTL_MINUTES)
+    stale = [mid for mid, ts in _processed_ids.items() if ts < cutoff]
+    for mid in stale:
+        del _processed_ids[mid]
 
 # Palabras que indican que el pescador quiere un nuevo análisis (no feedback)
 _NEW_QUERY_KEYWORDS = [
